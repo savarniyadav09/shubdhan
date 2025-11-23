@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GoodGain Mart</title>
+<style>
+  :root{
+    --bg:#000;
+    --panel:#111;
+    --accent:goldenrod;
+    --muted:#222;
+    --text:#e6c86b;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    text-align:center;
+    padding:1rem 0;
+    font-size:1.9rem;
+    font-weight:700;
+    border-bottom:3px solid var(--accent);
+  }
+  nav{
+    display:flex;
+    gap:.6rem;
+    justify-content:center;
+    padding:.6rem;
+    background:var(--panel);
+    flex-wrap:wrap;
+  }
+  .nav-btn{
+    background:transparent;
+    border:1.5px solid var(--accent);
+    color:var(--text);
+    padding:.35rem .9rem;
+    cursor:pointer;
+    border-radius:6px;
+    font-weight:700;
+  }
+  .nav-btn.active, .nav-btn:hover{
+    background:var(--accent);
+    color:#000;
+  }
+
+  main{
+    max-width:1100px;
+    margin:1rem auto 6rem;
+    padding:0 1rem;
+  }
+  .products{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:1rem;
+  }
+  .product-card{
+    background:var(--panel);
+    border:1px solid var(--accent);
+    border-radius:8px;
+    padding:1rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    min-height:240px;
+  }
+  .product-card img{
+    max-width:100%;
+    max-height:130px;
+    object-fit:contain;
+    border-radius:6px;
+    margin-bottom:.6rem;
+    background:rgba(255,215,0,0.03);
+  }
+  .product-card h4{margin:.3rem 0}
+  .product-card p{margin:.2rem 0; font-size:.95rem}
+  .price{font-weight:800; margin:.35rem 0}
+
+  .btn{
+    background:var(--accent);
+    color:#000;
+    border:none;
+    padding:.45rem .7rem;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:700;
+    margin-top:.5rem;
+  }
+  .btn.secondary{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--accent);
+  }
+
+  footer{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    background:var(--muted);
+    color:var(--text);
+    padding:.5rem 1rem;
+    display:flex;
+    justify-content:flex-start;
+    align-items:center;
+    font-weight:700;
+  }
+
+  /* Admin icon + panel */
+  #admin-icon{
+    position:fixed;
+    bottom:14px;
+    right:14px;
+    width:48px;height:48px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 6px 18px rgba(218,165,32,0.15);
+    z-index:1200;
+  }
+  #admin-panel{
+    position:fixed;
+    bottom:76px;
+    right:14px;
+    width:360px;
+    max-height:72vh;
+    overflow:auto;
+    background:#161616;
+    border:1px solid var(--accent);
+    border-radius:8px;
+    padding:12px;
+    display:none;
+    color:var(--text);
+    z-index:1200;
+  }
+  #admin-panel h3{margin:0 0 8px 0; font-size:1.1rem}
+  .admin-input, textarea, select{
+    width:100%;
+    padding:.45rem;
+    margin-top:.35rem;
+    margin-bottom:.6rem;
+    background:#000;
+    border:1px solid var(--accent);
+    color:var(--text);
+    border-radius:6px;
+  }
+  textarea{min-height:70px; resize:vertical}
+  .admin-btn{width:100%; padding:.55rem; border-radius:6px; border:none; background:var(--accent); color:#000; font-weight:800; cursor:pointer}
+  .admin-tabs{display:flex; gap:6px; margin-bottom:8px}
+  .tab-btn{flex:1; padding:.4rem .5rem; border-radius:6px; background:transparent; border:1px solid var(--accent); color:var(--text); font-weight:700; cursor:pointer}
+  .tab-btn.active{background:var(--accent); color:#000}
+
+  .small-muted{font-size:.85rem; color:rgba(230,200,110,0.85)}
+  .section{margin-top:.6rem}
+
+  /* Order modal */
+  #overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; z-index:1100;
+    align-items:center; justify-content:center;
+  }
+  .modal{
+    width:420px; max-width:92%; background:#0d0d0d; border:1px solid var(--accent); border-radius:8px; padding:14px;
+  }
+  .modal h4{margin:0 0 8px 0}
+  .order-row{display:flex; gap:.5rem}
+  .order-row .col{flex:1}
+  .order-list{display:flex; flex-direction:column; gap:.45rem;}
+  .order-card{background:#151515; border:1px solid rgba(218,165,32,0.12); padding:.6rem; border-radius:6px; display:flex; flex-direction:column; gap:.3rem}
+  .order-meta{display:flex; justify-content:space-between; gap:.5rem; font-size:.9rem}
+  .muted{color:rgba(230,200,110,0.7)}
+
+  /* responsive smaller screens */
+  @media (max-width:480px){
+    #admin-panel{right:8px; left:8px; width:auto}
+    .product-card{min-height:220px}
+  }
+</style>
+</head>
+<body>
+
+<header>Welcome to GoodGain Mart</header>
+
+<nav>
+  <button class="nav-btn active" data-category="all">All</button>
+  <button class="nav-btn" data-category="mens">Men's</button>
+  <button class="nav-btn" data-category="womens">Women's</button>
+  <button class="nav-btn" data-category="boys">Boys</button>
+  <button class="nav-btn" data-category="girls">Girls</button>
+  <button class="nav-btn" data-category="electronics">Electronics</button>
+  <button class="nav-btn" data-category="groceries">Groceries</button>
+</nav>
+
+<main>
+  <div class="products" id="products-container"></div>
+</main>
+
+<footer>For any query: 7697121542</footer>
+
+<div id="admin-icon" title="Admin Panel">A</div>
+
+<div id="admin-panel" aria-hidden="true" role="dialog">
+  <h3>Admin Panel</h3>
+  <div id="login-area">
+    <label class="small-muted">Password:
+      <input id="admin-password" class="admin-input" type="password" placeholder="Enter password" />
+    </label>
+    <button id="admin-login-btn" class="admin-btn">Login</button>
+  </div>
+
+  <div id="admin-content" style="display:none;">
+    <div class="admin-tabs">
+      <button class="tab-btn active" data-tab="add">Add / Update Product</button>
+      <button class="tab-btn" data-tab="manage">Manage Products</button>
+      <button class="tab-btn" data-tab="orders">Orders</button>
+    </div>
+
+    <!-- Add / Update -->
+    <div id="tab-add" class="section tab-section">
+      <label>Category:
+        <select id="product-category" class="admin-input">
+          <option value="mens">Men's</option>
+          <option value="womens">Women's</option>
+          <option value="boys">Boys</option>
+          <option value="girls">Girls</option>
+          <option value="electronics">Electronics</option>
+          <option value="groceries">Groceries</option>
+        </select>
+      </label>
+      <label>Product Name:
+        <input id="product-name" class="admin-input" type="text" placeholder="Name" />
+      </label>
+      <label>Price:
+        <input id="product-price" class="admin-input" type="number" step="0.01" min="0" placeholder="Price" />
+      </label>
+      <label>Description:
+        <textarea id="product-desc" class="admin-input" placeholder="Description"></textarea>
+      </label>
+      <label>Product Image:
+        <input id="product-image" class="admin-input" type="file" accept="image/*" />
+      </label>
+
+      <button id="add-product-btn" class="admin-btn">Add Product</button>
+      <button id="cancel-edit-btn" class="admin-btn" style="background:#9a2b2b; display:none; margin-top:.5rem">Cancel Edit</button>
+      <button id="logout-btn" class="admin-btn" style="background:#b33; margin-top:.5rem">Logout</button>
+      <p class="small-muted" style="margin-top:.5rem">Images saved to browser storage (localStorage). Clearing browser data will remove them.</p>
+    </div>
+
+    <!-- Manage -->
+    <div id="tab-manage" class="section tab-section" style="display:none;">
+      <div id="manage-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
+    </div>
+
+    <!-- Orders -->
+    <div id="tab-orders" class="section tab-section" style="display:none;">
+      <div id="orders-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal / Overlay -->
+<div id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h4 id="order-modal-title">Order</h4>
+    <div style="margin-bottom:.6rem" id="order-product-ref" class="muted"></div>
+
+    <label>Name:
+      <input id="order-name" class="admin-input" type="text" placeholder="Customer full name" />
+    </label>
+    <div class="order-row">
+      <div class="col">
+        <label>Mobile:
+          <input id="order-mobile" class="admin-input" type="tel" placeholder="Mobile number" />
+        </label>
+      </div>
+      <div class="col">
+        <label>Pincode:
+          <input id="order-pincode" class="admin-input" type="text" placeholder="Pincode" />
+        </label>
+      </div>
+    </div>
+    <label>Address:
+      <textarea id="order-address" class="admin-input" placeholder="Full delivery address"></textarea>
+    </label>
+    <label>Quantity:
+      <input id="order-qty" class="admin-input" type="number" min="1" value="1" />
+    </label>
+
+    <div style="display:flex; gap:.5rem; margin-top:.6rem">
+      <button id="order-submit" class="btn">Place Order</button>
+      <button id="order-cancel" class="btn secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- STORAGE KEYS ---------- */
+const PRODUCTS_KEY = 'goodgain_products_v2';
+const ORDERS_KEY = 'goodgain_orders_v2';
+const ADMIN_PASSWORD = 'SY312005';
+
+/* ---------- INITIAL SAMPLE DATA ---------- */
+let products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [
+  {category:'mens', name:'Men T-Shirt', price:499, desc:'Comfortable cotton t-shirt', image:''},
+  {category:'womens', name:'Women Dress', price:999, desc:'Elegant evening dress', image:''},
+  {category:'electronics', name:'Wireless Headphones', price:1999, desc:'Noise cancelling', image:''},
+  {category:'groceries', name:'Organic Honey', price:350, desc:'Pure natural honey', image:''},
+];
+
+let orders = JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
+
+/* ---------- DOM Refs ---------- */
+const productsContainer = document.getElementById('products-container');
+const navButtons = document.querySelectorAll('.nav-btn');
+
+const adminIcon = document.getElementById('admin-icon');
+const adminPanel = document.getElementById('admin-panel');
+const adminLoginBtn = document.getElementById('admin-login-btn');
+const adminPasswordInput = document.getElementById('admin-password');
+const adminContent = document.getElementById('admin-content');
+const logoutBtn = document.getElementById('logout-btn');
+
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabSections = document.querySelectorAll('.tab-section');
+
+const addProductBtn = document.getElementById('add-product-btn');
+const cancelEditBtn = document.getElementById('cancel-edit-btn');
+const productCategory = document.getElementById('product-category');
+const productName = document.getElementById('product-name');
+const productPrice = document.getElementById('product-price');
+const productDesc = document.getElementById('product-desc');
+const productImageInput = document.getElementById('product-image');
+
+const manageList = document.getElementById('manage-list');
+const ordersList = document.getElementById('orders-list');
+
+/* Order modal refs */
+const overlay = document.getElementById('overlay');
+const orderProductRef = document.getElementById('order-product-ref');
+const orderModalTitle = document.getElementById('order-modal-title');
+const orderName = document.getElementById('order-name');
+const orderMobile = document.getElementById('order-mobile');
+const orderAddress = document.getElementById('order-address');
+const orderPincode = document.getElementById('order-pincode');
+const orderQty = document.getElementById('order-qty');
+const orderSubmit = document.getElementById('order-submit');
+const orderCancel = document.getElementById('order-cancel');
+
+let currentFilter = 'all';
+let editingIndex = -1; // index in products when editing
+let orderingProductIndex = -1; // which product user is ordering
+
+/* ---------- RENDER PRODUCTS ---------- */
+function renderProducts(filter='all'){
+  productsContainer.innerHTML = '';
+  const filtered = filter === 'all' ? products : products.filter(p => p.category === filter);
+  if(filtered.length === 0){
+    productsContainer.innerHTML = '<p class="muted" style="padding:1rem">No products found.</p>';
+    return;
+  }
+  filtered.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    const imgHTML = p.image ? `<img src="${p.image}" alt="${escapeHtml(p.name)}">` : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;background:rgba(255,215,0,0.02);border-radius:6px;margin-bottom:.6rem;color:var(--text)">No image</div>`;
+    card.innerHTML = `
+      ${imgHTML}
+      <h4>${escapeHtml(p.name)}</h4>
+      <div class="price">₹${Number(p.price).toFixed(2)}</div>
+      <p>${escapeHtml(p.desc)}</p>
+      <button class="btn order-now-btn" data-index="${idx}">Order Now</button>
+    `;
+    productsContainer.appendChild(card);
+  });
+
+  // Attach order button handlers (need index relative to original products array)
+  const orderBtns = document.querySelectorAll('.order-now-btn');
+  orderBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = Number(btn.getAttribute('data-index'));
+      openOrderModal(index);
+    });
+  });
+}
+
+/* ---------- NAV BUTTONS ---------- */
+navButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.getAttribute('data-category');
+    renderProducts(currentFilter);
+  });
+});
+
+/* ---------- ADMIN PANEL TOGGLE & LOGIN ---------- */
+adminIcon.addEventListener('click', () => {
+  adminPanel.style.display = adminPanel.style.display === 'none' || adminPanel.style.display === '' ? 'block' : 'none';
+});
+
+adminLoginBtn.addEventListener('click', () => {
+  const pass = adminPasswordInput.value;
+  if(pass === ADMIN_PASSWORD){
+    adminContent.style.display = 'block';
+    document.getElementById('login-area').style.display = 'none';
+    adminPasswordInput.value = '';
+    refreshManageList();
+    renderOrdersList();
+  } else {
+    alert('Wrong Password!');
+  }
+});
+
+logoutBtn.addEventListener('click', () => {
+  adminContent.style.display = 'none';
+  document.getElementById('login-area').style.display = 'block';
+});
+
+/* ---------- TABS ---------- */
+tabButtons.forEach(tb=>{
+  tb.addEventListener('click', ()=>{
+    tabButtons.forEach(t=>t.classList.remove('active'));
+    tb.classList.add('active');
+    const target = tb.getAttribute('data-tab');
+    tabSections.forEach(sec => sec.style.display = sec.id === `tab-${target}` || sec.id === `tab-${target}` ? (target==='add' ? '' : '') : 'none');
+    // Show only selected tab-section
+    tabSections.forEach(sec => {
+      sec.style.display = sec.id === `tab-${target}` ? '' : 'none';
+    });
+    // refresh lists when switching
+    if(target === 'manage') refreshManageList();
+    if(target === 'orders') renderOrdersList();
+  });
+});
+
+/* ---------- ADD / UPDATE PRODUCT ---------- */
+addProductBtn.addEventListener('click', () => {
+  const category = productCategory.value.trim();
+  const name = productName.value.trim();
+  const price = parseFloat(productPrice.value);
+  const desc = productDesc.value.trim();
+
+  if(!category || !name || isNaN(price) || !desc){
+    alert('Please fill all fields correctly.');
+    return;
+  }
+
+  // image handling
+  if(productImageInput.files && productImageInput.files[0]){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const imgData = e.target.result;
+      saveProduct({category, name, price, desc, image: imgData});
+    }
+    reader.readAsDataURL(productImageInput.files[0]);
+  } else {
+    // no new image chosen => keep existing image if editing, or empty if adding
+    const existingImage = (editingIndex !== -1 && products[editingIndex]) ? products[editingIndex].image || '' : '';
+    saveProduct({category, name, price, desc, image: existingImage});
+  }
+});
+
+function saveProduct(prod){
+  if(editingIndex !== -1){
+    // update
+    products[editingIndex] = prod;
+    editingIndex = -1;
+    cancelEditBtn.style.display = 'none';
+    addProductBtn.textContent = 'Add Product';
+    alert('Product updated!');
+  } else {
+    products.push(prod);
+    alert('Product added!');
+  }
+  persistProducts();
+  clearAddForm();
+  renderProducts(currentFilter);
+  refreshManageList();
+}
+
+/* Cancel edit */
+cancelEditBtn.addEventListener('click', ()=> {
+  editingIndex = -1;
+  cancelEditBtn.style.display = 'none';
+  addProductBtn.textContent = 'Add Product';
+  clearAddForm();
+});
+
+/* ---------- MANAGE PRODUCTS (Admin) ---------- */
+function refreshManageList(){
+  manageList.innerHTML = '';
+  if(products.length === 0){
+    manageList.innerHTML = '<div class="small-muted">No products yet.</div>';
+    return;
+  }
+  products.forEach((p, idx)=>{
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.gap = '.6rem';
+    row.style.alignItems = 'center';
+    row.style.background = '#0f0f0f';
+    row.style.padding = '.45rem';
+    row.style.borderRadius = '6px';
+    row.style.border = '1px solid rgba(218,165,32,0.06)';
+    row.innerHTML = `
+      <div style="width:56px;height:48px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,215,0,0.02);border-radius:6px;overflow:hidden">
+        ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover">` : '<div class="muted">No image</div>'}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:800">${escapeHtml(p.name)}</div>
+        <div class="muted">₹${Number(p.price).toFixed(2)} • ${escapeHtml(p.category)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.3rem">
+        <button class="admin-edit-btn" data-index="${idx}" style="padding:.35rem .5rem;border-radius:6px;border:1px solid var(--accent);background:transparent;color:var(--text);cursor:pointer">Edit</button>
+        <button class="admin-delete-btn" data-index="${idx}" style="padding:.35rem .5rem;border-radius:6px;background:#a33;color:#fff;border:none;cursor:pointer">Delete</button>
+      </div>
+    `;
+    manageList.appendChild(row);
+  });
+
+  // Attach handlers
+  manageList.querySelectorAll('.admin-edit-btn').forEach(b=>{
+    b.addEventListener('click', () => {
+      const idx = Number(b.getAttribute('data-index'));
+      startEditProduct(idx);
+    });
+  });
+  manageList.querySelectorAll('.admin-delete-btn').forEach(b=>{
+    b.addEventListener('click', () => {
+      const idx = Number(b.getAttribute('data-index'));
+      if(confirm('Delete this product?')) {
+        products.splice(idx,1);
+        persistProducts();
+        refreshManageList();
+        renderProducts(currentFilter);
+      }
+    });
+  });
+}
+
+/* ---------- EDIT PRODUCT ---------- */
+function startEditProduct(idx){
+  const p = products[idx];
+  if(!p) return;
+  editingIndex = idx;
+  productCategory.value = p.category;
+  productName.value = p.name;
+  productPrice.value = p.price;
+  productDesc.value = p.desc;
+  productImageInput.value = ''; // no file selected
+  addProductBtn.textContent = 'Update Product';
+  cancelEditBtn.style.display = 'block';
+  // switch to Add tab
+  tabButtons.forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="add"]').classList.add('active');
+  tabSections.forEach(sec => sec.style.display = sec.id === 'tab-add' ? '' : 'none');
+}
+
+/* ---------- ORDERS: Open modal, place order ---------- */
+function openOrderModal(productIndex){
+  orderingProductIndex = productIndex;
+  const p = products[productIndex];
+  if(!p) return alert('Product not found');
+  orderProductRef.textContent = `${p.name} • ₹${Number(p.price).toFixed(2)}`;
+  orderModalTitle.textContent = 'Place Order';
+  overlay.style.display = 'flex';
+  // clear fields
+  orderName.value = '';
+  orderMobile.value = '';
+  orderAddress.value = '';
+  orderPincode.value = '';
+  orderQty.value = 1;
+}
+
+orderCancel.addEventListener('click', ()=> {
+  overlay.style.display = 'none';
+  orderingProductIndex = -1;
+});
+
+orderSubmit.addEventListener('click', ()=> {
+  const name = orderName.value.trim();
+  const mobile = orderMobile.value.trim();
+  const address = orderAddress.value.trim();
+  const pincode = orderPincode.value.trim();
+  const qty = parseInt(orderQty.value) || 1;
+
+  if(!name || !mobile || !address || !pincode){
+    alert('Please fill all order fields.');
+    return;
+  }
+  // basic mobile validation (10 digits)
+  const digits = mobile.replace(/\D/g,'');
+  if(digits.length < 10){
+    alert('Enter valid mobile number (10 digits).');
+    return;
+  }
+
+  const prod = products[orderingProductIndex];
+  const order = {
+    id: 'ORD' + Date.now(),
+    productName: prod ? prod.name : 'Unknown',
+    productIndex: orderingProductIndex,
+    qty,
+    customerName: name,
+    mobile,
+    address,
+    pincode,
+    date: new Date().toISOString(),
+    delivered: false
+  };
+  orders.unshift(order);
+  persistOrders();
+  overlay.style.display = 'none';
+  orderingProductIndex = -1;
+  alert('Order placed! Admin can view it in Admin → Orders');
+  // Optionally: update UI / badge etc.
+});
+
+/* ---------- ADMIN ORDERS LIST ---------- */
+function renderOrdersList(){
+  ordersList.innerHTML = '';
+  if(orders.length === 0){
+    ordersList.innerHTML = '<div class="small-muted">No orders yet.</div>';
+    return;
+  }
+  orders.forEach((o, idx) => {
+    const card = document.createElement('div');
+    card.className = 'order-card';
+    card.innerHTML = `
+      <div class="order-meta">
+        <div><strong>${escapeHtml(o.customerName)}</strong> • ${escapeHtml(o.mobile)}</div>
+        <div class="muted">${new Date(o.date).toLocaleString()}</div>
+      </div>
+      <div style="font-weight:800">${escapeHtml(o.productName)} x ${o.qty}</div>
+      <div class="muted">${escapeHtml(o.address)} • ${escapeHtml(o.pincode)}</div>
+      <div style="display:flex;gap:.45rem;margin-top:.4rem">
+        <button class="btn mark-del-btn" data-index="${idx}">${o.delivered ? 'Delivered' : 'Mark Delivered'}</button>
+        <button class="btn secondary delete-order-btn" data-index="${idx}">Delete</button>
+      </div>
+    `;
+    ordersList.appendChild(card);
+  });
+
+  // handlers
+  ordersList.querySelectorAll('.mark-del-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const idx = Number(b.getAttribute('data-index'));
+      orders[idx].delivered = !orders[idx].delivered;
+      persistOrders();
+      renderOrdersList();
+    });
+  });
+  ordersList.querySelectorAll('.delete-order-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const idx = Number(b.getAttribute('data-index'));
+      if(confirm('Delete this order?')) {
+        orders.splice(idx,1);
+        persistOrders();
+        renderOrdersList();
+      }
+    });
+  });
+}
+
+/* ---------- STORAGE HELPERS ---------- */
+function persistProducts(){
+  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+}
+function persistOrders(){
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+}
+
+/* ---------- UTIL ---------- */
+function clearAddForm(){
+  productCategory.value = 'mens';
+  productName.value = '';
+  productPrice.value = '';
+  productDesc.value = '';
+  productImageInput.value = '';
+}
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])});
+}
+
+/* ---------- INITIAL RENDER ---------- */
+renderProducts();
+
+/* Render manage list and orders if admin already logged in (unlikely) */
+if(adminContent.style.display !== 'none'){
+  refreshManageList();
+  renderOrdersList();
+}
+
+/* Optional: clicking outside admin-panel hides it (but keep panel accessible) */
+document.addEventListener('click', (e)=>{
+  if(!adminPanel.contains(e.target) && !adminIcon.contains(e.target)){
+    // don't auto-close to prevent annoyance; comment out if desired
+    // adminPanel.style.display = 'none';
+  }
+});
+
+/* ---------- End of script ---------- */
+</script>
+
+</body>
+</html>
